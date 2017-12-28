@@ -60,6 +60,40 @@ export function createGameReducer({game, numPlayers}) {
   initial._initial = deepCopy(initial);
 
   /**
+   * GameFlow
+   *
+   * Redux reducer that maintains ctx.
+   * The default responds to a single action END_TURN
+   * that increments the currentPlayer and checks if
+   * there is a winner.
+   * @param {object} ctx - ctx before this action.
+   * @param {object} action - A Redux action.
+   * @param {object} G - G before this action.
+   */
+  const GameFlow = (ctx = {}, action, G) => {
+    switch (action.type) {
+      case Actions.END_TURN: {
+        // Update winner.
+        const winner = game.victory(G, ctx);
+        // Update current player.
+        const currentPlayer =
+            (+ctx.currentPlayer + 1) % ctx.numPlayers + "";
+        // Update turn.
+        const turn = ctx.turn + 1;
+        // Return new ctx.
+        return {...ctx, currentPlayer, turn, winner};
+      }
+
+      default:
+        return ctx;
+    }
+  };
+
+  if (!game.flow) {
+    game.flow = GameFlow;
+  }
+
+  /**
    * GameReducer
    *
    * Redux reducer that maintains the overall game state.
@@ -75,28 +109,9 @@ export function createGameReducer({game, numPlayers}) {
       }
 
       case Actions.END_TURN: {
-        // Update winner.
-        const winner = game.victory(state.G, state.ctx);
-
-        // The game may have some end of turn clean up.
-        const G = game.reducer(
-            state.G, { type: Actions.END_TURN }, state.ctx);
-
-        let ctx = state.ctx;
-
-        // Update current player.
-        const currentPlayer =
-            (+ctx.currentPlayer + 1) % ctx.numPlayers + "";
-
-        // Update turn.
-        const turn = ctx.turn + 1;
-
-        ctx = {...ctx, currentPlayer, turn, winner};
-
-        // Update log.
+        const ctx = game.flow(state.ctx, action, state.G);
         const log = [...state.log, action];
-
-        return {...state, G, ctx, _id: state._id + 1, log};
+        return {...state, ctx, _id: state._id + 1, log};
       }
 
       case Actions.RESTORE: {

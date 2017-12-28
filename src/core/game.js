@@ -36,6 +36,7 @@
  *     const G = {...};
  *     return G;
  *   },
+ *
  *   moves: {
  *     'moveWithoutArgs': (G, ctx) => {
  *       return Object.assign({}, G, ...);
@@ -44,11 +45,17 @@
  *       return Object.assign({}, G, ...);
  *     }
  *   },
- *   winner: (G, ctx) => { ... },
+ *
+ *   // Other optional settings.
+ *
+ *   victory: (G, ctx) => { ... },
+ *
  *   playerView: (G, ctx, playerID) => { ... },
+ *
+ *   flow: (ctx, action, G) => ctx,
  * })
  */
-function Game({setup, moves, victory, playerView}) {
+function Game({setup, moves, victory, playerView, flow}) {
   if (!setup)       setup = () => ({});
   if (!moves)       moves = {};
   if (!victory)     victory = () => null;
@@ -58,6 +65,7 @@ function Game({setup, moves, victory, playerView}) {
     setup,
     victory,
     playerView,
+    flow,
     moveNames: Object.getOwnPropertyNames(moves),
     reducer: (G, action, ctx) => {
       if (moves.hasOwnProperty(action.type)) {
